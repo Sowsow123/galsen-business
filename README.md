@@ -1,2 +1,4 @@
 # galsen-business
-Plateforme de visionnage rémunéré
+# galsen-business
+**Application mobile de récompenses vidéo**
+Mise à jour description 
