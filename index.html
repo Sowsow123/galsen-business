@@ -1,163 +1,198 @@
-lekkhaliss/
-├── frontend/                  # Application React
-│   ├── public/
-│   │   ├── index.html
-│   │   └── qr/               # Dossier pour les QR Codes
-│   │       └── wave-qr.png   # QR Code Wave Business
-│   ├── src/
-│   │   ├── components/       # Composants réutilisables
-│   │   │   ├── MenuVertical.js
-│   │   │   └── QRCodeComponent.js
-│   │   ├── pages/            # Pages de l'application
-│   │   │   ├── Inscription.js
-│   │   │   ├── Connexion.js
-│   │   │   ├── Depot.js
-│   │   │   ├── Retrait.js
-│   │   │   ├── AdminDashboard.js
-│   │   │   ├── Contact.js
-│   │   │   └── Aide.js
-│   │   ├── App.js
-│   │   ├── index.js
-│   │   └── styles.css        # Styles globaux
-│   ├── package.json          # Dépendances frontend
-│   └── .gitignore
-├── backend/                   # API Django
-│   ├── core/
-│   │   ├── migrations/       # Migrations de la base de données
-│   │   ├── __init__.py
-│   │   ├── admin.py          # Configuration de l'admin Django
-│   │   ├── models.py         # Modèles de données
-│   │   ├── views.py          # Logique métier
-│   │   ├── urls.py           # Routes API
-│   │   └── serializers.py    # Sérialiseurs pour les API
-│   ├── lekkhaliss/
-│   │   ├── __init__.py
-│   │   ├── settings.py       # Configuration Django
-│   │   ├── urls.py           # Routes principales
-│   │   └── wsgi.py
-│   ├── manage.py             # Script de gestion Django
-│   ├── requirements.txt      # Dépendances backend
-│   └── .gitignore
-├── .env                      # Variables d'environnement (à ajouter)
-└── README.md                 # Documentation du projet
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import "./styles.css";
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEKKHALISS - Gagnez avec des vidéos</title>
+    <style>
+        :root {
+            --orange: #FF6600;
+            --blanc: #FFFFFF;
+            --noir: #1A1A1A;
+        }
 
-const MenuVertical = () => {
-  const [isOpen, setIsOpen] = useState(false);
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: var(--blanc);
+            color: var(--noir);
+        }
 
-  return (
-    <div className="menu-container">
-      <button className="menu-icon" onClick={() => setIsOpen(!isOpen)}>
-        |||
-      </button>
-      {isOpen && (
-        <div className="menu-items">
-          <Link to="/inscription">Inscription</Link>
-          <Link to="/connexion">Connexion</Link>
-          <Link to="/depot">Dépôt</Link>
-          <Link to="/retrait">Retrait</Link>
-          <Link to="/contact">Contact</Link>
-          <Link to="/aide">Aide</Link>
+        /* Menu vertical */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--orange);
+        }
+
+        .menu-content {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: var(--blanc);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        /* Sections principales */
+        .section {
+            max-width: 800px;
+            margin: 80px auto 40px;
+            padding: 20px;
+        }
+
+        /* Formulaire */
+        .form-group {
+            margin: 15px 0;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--orange);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* QR Code */
+        .qr-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Tableau admin */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu vertical -->
+    <div class="menu-btn" onclick="toggleMenu()">|||</div>
+    <div class="menu-content" id="menu">
+        <a href="#inscription">Inscription</a><br>
+        <a href="#depot">Dépôt</a><br>
+        <a href="#retrait">Retrait</a><br>
+        <a href="#admin">Admin</a><br>
+        <a href="#contact">Contact</a>
+    </div>
+
+    <!-- Section Dépôt -->
+    <div class="section" id="depot">
+        <h2>Dépôt par Wave Business</h2>
+        <div class="qr-container">
+            <div id="qrcode"></div>
+            <p>Scannez ce QR Code avec l'application Wave</p>
         </div>
-      )}
+        
+        <form onsubmit="validateDeposit(event)">
+            <div class="form-group">
+                <input type="text" id="wave-code" placeholder="Code de transaction Wave" required>
+            </div>
+            <button type="submit">Valider le dépôt</button>
+        </form>
     </div>
-  );
-};
 
-export default MenuVertical;
-import React, { useState } from "react";
-import QRCode from "qrcode.react";
-import axios from "axios";
-
-const Depot = () => {
-  const [code, setCode] = useState("");
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post("/api/validate-deposit/", { code });
-      if (response.data.status === "success") {
-        alert("Dépôt validé !");
-      }
-    } catch (error) {
-      alert("Erreur: Code invalide ou serveur indisponible.");
-    }
-  };
-
-  return (
-    <div className="depot-page">
-      <h2>Dépôt via Wave Business</h2>
-      <QRCode
-        value="https://wave.com/sn/business/qr/ADMIN_ID"
-        size={256}
-        includeMargin={true}
-      />
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Code de transaction Wave"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <button type="submit">Valider</button>
-      </form>
+    <!-- Section Retrait -->
+    <div class="section" id="retrait">
+        <h2>Retrait d'argent</h2>
+        <form onsubmit="processWithdrawal(event)">
+            <select id="method">
+                <option value="wave">Wave Sénégal</option>
+                <option value="orange">Orange Money</option>
+            </select>
+            <input type="tel" id="phone" placeholder="Numéro (+221...)" pattern="\+221[0-9]{9}" required>
+            <input type="number" id="amount" placeholder="Montant (XOF)" min="1000" required>
+            <button type="submit">Demander retrait</button>
+        </form>
     </div>
-  );
-};
 
-export default Depot;
-from django.db import models
-from django.contrib.auth.models import AbstractUser
+    <!-- Tableau de bord Admin -->
+    <div class="section" id="admin">
+        <h2>Tableau de bord Administrateur</h2>
+        <table>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Dépôt</th>
+                <th>Commission</th>
+            </tr>
+            <tr>
+                <td>User123</td>
+                <td>10,000 XOF</td>
+                <td>3,000 XOF</td>
+            </tr>
+        </table>
+        
+        <h3>Retrait Admin</h3>
+        <input type="number" id="admin-amount" placeholder="Montant à retirer">
+        <button onclick="adminWithdraw()">Retirer</button>
+    </div>
 
-class CustomUser(AbstractUser):
-    phone = models.CharField(max_length=20, unique=True)  # Format +221...
-    balance = models.IntegerField(default=0)
-    level = models.IntegerField(default=1)
-    referral_code = models.CharField(max_length=10, blank=True)
-    is_verified = models.BooleanField(default=False)
+    <script>
+        // Gestion du menu
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
 
-class Transaction(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    amount = models.IntegerField()
-    type = models.CharField(max_length=20)  # DEPOT, RETRAIT, COMMISSION
-    timestamp = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, default="EN_ATTENTE")
-    from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser, Transaction
+        // Validation dépôt
+        function validateDeposit(e) {
+            e.preventDefault();
+            const code = document.getElementById('wave-code').value;
+            if(code.startsWith('WAVE_')) {
+                alert('Dépôt validé! Compte crédité.');
+            } else {
+                alert('Code invalide');
+            }
+        }
 
-@csrf_exempt
-def validate_deposit(request):
-    if request.method == "POST":
-        code = request.POST.get("code")
-        # Vérifiez manuellement le code via l'interface Wave Business
-        if code.startswith("WAVE_"):
-            user = request.user
-            user.balance += 1000  # Montant du dépôt
-            user.save()
-            Transaction.objects.create(
-                user=user, 
-                amount=1000, 
-                type="DEPOT",
-                status="VALIDÉ"
-            )
-            return JsonResponse({"status": "success"})
-        return JsonResponse({"status": "invalid_code"})
-        git clone https://github.com/yourusername/lekkhaliss.git
-        # Frontend
-cd frontend && npm install
+        // Retrait utilisateur
+        function processWithdrawal(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const amount = document.getElementById('amount').value;
+            alert(`Retrait de ${amount}XOF vers ${phone} en cours...`);
+        }
 
-# Backend
-cd ../backend && pip install -r requirements.txt
-# backend/.env
-WAVE_API_KEY=votre_clé_api_wave
-ORANGE_MONEY_SECRET=votre_secret_orange
-DJANGO_SECRET_KEY=votre_clé_secrète_django
-# Backend
-python manage.py migrate
-python manage.py runserver
+        // Retrait admin
+        function adminWithdraw() {
+            const amount = document.getElementById('admin-amount').value;
+            alert(`Retrait admin de ${amount}XOF effectué!`);
+        }
 
-# Frontend
-npm start
+        // Génération QR Code
+        window.onload = function() {
+            const qrcode = document.getElementById('qrcode');
+            qrcode.innerHTML = `
+                <svg width="200" height="200">
+                    <!-- Insérez votre QR Code Wave ici -->
+                    <rect width="200" height="200" fill="#FFF"/>
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">
+                        WAVE BUSINESS
+                    </text>
+                </svg>
+            `;
+        }
+    </script>
+</body>
+</html>
