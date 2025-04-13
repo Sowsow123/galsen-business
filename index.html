@@ -1,132 +1,163 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galsen Business</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <style>
-        :root {
-            --primary: #FF6600; /* Orange */
-            --secondary: #FFFFFF; /* Blanc */
-            --dark: #2c3e50;
-            --light: #f5f7fa;
-        }
+lekkhaliss/
+├── frontend/                  # Application React
+│   ├── public/
+│   │   ├── index.html
+│   │   └── qr/               # Dossier pour les QR Codes
+│   │       └── wave-qr.png   # QR Code Wave Business
+│   ├── src/
+│   │   ├── components/       # Composants réutilisables
+│   │   │   ├── MenuVertical.js
+│   │   │   └── QRCodeComponent.js
+│   │   ├── pages/            # Pages de l'application
+│   │   │   ├── Inscription.js
+│   │   │   ├── Connexion.js
+│   │   │   ├── Depot.js
+│   │   │   ├── Retrait.js
+│   │   │   ├── AdminDashboard.js
+│   │   │   ├── Contact.js
+│   │   │   └── Aide.js
+│   │   ├── App.js
+│   │   ├── index.js
+│   │   └── styles.css        # Styles globaux
+│   ├── package.json          # Dépendances frontend
+│   └── .gitignore
+├── backend/                   # API Django
+│   ├── core/
+│   │   ├── migrations/       # Migrations de la base de données
+│   │   ├── __init__.py
+│   │   ├── admin.py          # Configuration de l'admin Django
+│   │   ├── models.py         # Modèles de données
+│   │   ├── views.py          # Logique métier
+│   │   ├── urls.py           # Routes API
+│   │   └── serializers.py    # Sérialiseurs pour les API
+│   ├── lekkhaliss/
+│   │   ├── __init__.py
+│   │   ├── settings.py       # Configuration Django
+│   │   ├── urls.py           # Routes principales
+│   │   └── wsgi.py
+│   ├── manage.py             # Script de gestion Django
+│   ├── requirements.txt      # Dépendances backend
+│   └── .gitignore
+├── .env                      # Variables d'environnement (à ajouter)
+└── README.md                 # Documentation du projet
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import "./styles.css";
 
-        /* Design Professionnel */
-        body {
-            font-family: 'Arial', sans-serif;
-            background: var(--light);
-            transition: 0.3s;
-        }
+const MenuVertical = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
-        .menu-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-
-        .menu-content {
-            display: none;
-            position: fixed;
-            top: 60px;
-            left: 20px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 5px;
-            padding: 15px;
-        }
-
-        /* Thème Sombre */
-        body.dark-mode {
-            background: #121212;
-            color: white;
-        }
-
-        /* Section Vidéos */
-        .video-container {
-            margin: 20px;
-            border: 2px solid var(--primary);
-            border-radius: 10px;
-            padding: 15px;
-        }
-    </style>
-</head>
-<body>
-    <!-- Menu Hamburger -->
-    <div class="menu-btn" onclick="toggleMenu()">
-        <i class="fas fa-bars fa-2x" style="color: var(--primary)"></i>
-    </div>
-    <div class="menu-content" id="menuContent">
-        <a href="#" onclick="showSection('inscription')">Inscription</a>
-        <a href="#" onclick="showSection('depot')">Dépôt</a>
-        <a href="#" onclick="showAdminDashboard()">Admin</a>
-        <a href="#" onclick="toggleDarkMode()">Thème</a>
-        <a href="mailto:msow93062@gmail.com">Contact</a>
-    </div>
-
-    <!-- Formulaire Admin -->
-    <div id="adminSection" style="display:none;">
-        <h2>Tableau de Bord Admin</h2>
-        <div class="stats">
-            <p>Gains Totaux : <span id="totalEarnings">0 XOF</span></p>
-            <button onclick="generateWaveQR()">Générer QR Code Wave</button>
-            <img id="waveQR" src="" alt="QR Code Wave">
+  return (
+    <div className="menu-container">
+      <button className="menu-icon" onClick={() => setIsOpen(!isOpen)}>
+        |||
+      </button>
+      {isOpen && (
+        <div className="menu-items">
+          <Link to="/inscription">Inscription</Link>
+          <Link to="/connexion">Connexion</Link>
+          <Link to="/depot">Dépôt</Link>
+          <Link to="/retrait">Retrait</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/aide">Aide</Link>
         </div>
+      )}
     </div>
+  );
+};
 
-    <!-- Section Vidéos -->
-    <div class="video-container">
-        <h3>Regardez et Gagnez !</h3>
-        <iframe width="100%" height="315" src="https://www.youtube.com/embed/Kwsd3VtMr8k" frameborder="0" allowfullscreen></iframe>
-        <button onclick="creditEarnings(100)">J'ai regardé (+100 XOF)</button>
+export default MenuVertical;
+import React, { useState } from "react";
+import QRCode from "qrcode.react";
+import axios from "axios";
+
+const Depot = () => {
+  const [code, setCode] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("/api/validate-deposit/", { code });
+      if (response.data.status === "success") {
+        alert("Dépôt validé !");
+      }
+    } catch (error) {
+      alert("Erreur: Code invalide ou serveur indisponible.");
+    }
+  };
+
+  return (
+    <div className="depot-page">
+      <h2>Dépôt via Wave Business</h2>
+      <QRCode
+        value="https://wave.com/sn/business/qr/ADMIN_ID"
+        size={256}
+        includeMargin={true}
+      />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Code de transaction Wave"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <button type="submit">Valider</button>
+      </form>
     </div>
+  );
+};
 
-    <script>
-        // Configuration Firebase (Remplacer avec vos clés)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "votre-projet.firebaseapp.com",
-            projectId: "votre-projet",
-            storageBucket: "votre-projet.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+export default Depot;
+from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-        // Fonctionnalités Admin
-        function showAdminDashboard() {
-            if (currentUser.email === "msow93062@gmail.com") {
-                document.getElementById('adminSection').style.display = 'block';
-                loadAdminStats();
-            }
-        }
+class CustomUser(AbstractUser):
+    phone = models.CharField(max_length=20, unique=True)  # Format +221...
+    balance = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+    referral_code = models.CharField(max_length=10, blank=True)
+    is_verified = models.BooleanField(default=False)
 
-        async function loadAdminStats() {
-            const snapshot = await db.collection('deposits').get();
-            let total = 0;
-            snapshot.forEach(doc => {
-                total += doc.data().amount * 0.3; // 30% de commission
-            });
-            document.getElementById('totalEarnings').textContent = total + " XOF";
-        }
+class Transaction(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    amount = models.IntegerField()
+    type = models.CharField(max_length=20)  # DEPOT, RETRAIT, COMMISSION
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default="EN_ATTENTE")
+    from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import CustomUser, Transaction
 
-        // Système de Parrainage
-        function generateReferralCode() {
-            return Math.random().toString(36).substr(2, 6).toUpperCase();
-        }
+@csrf_exempt
+def validate_deposit(request):
+    if request.method == "POST":
+        code = request.POST.get("code")
+        # Vérifiez manuellement le code via l'interface Wave Business
+        if code.startswith("WAVE_"):
+            user = request.user
+            user.balance += 1000  # Montant du dépôt
+            user.save()
+            Transaction.objects.create(
+                user=user, 
+                amount=1000, 
+                type="DEPOT",
+                status="VALIDÉ"
+            )
+            return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "invalid_code"})
+        git clone https://github.com/yourusername/lekkhaliss.git
+        # Frontend
+cd frontend && npm install
 
-        // QR Code Wave
-        function generateWaveQR() {
-            const qr = document.getElementById('waveQR');
-            qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=WAVE:${adminWaveAccount}`;
-        }
-    </script>
-</body>
-</html>
+# Backend
+cd ../backend && pip install -r requirements.txt
+# backend/.env
+WAVE_API_KEY=votre_clé_api_wave
+ORANGE_MONEY_SECRET=votre_secret_orange
+DJANGO_SECRET_KEY=votre_clé_secrète_django
+# Backend
+python manage.py migrate
+python manage.py runserver
+
+# Frontend
+npm start
